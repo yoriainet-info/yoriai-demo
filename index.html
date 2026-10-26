@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>町会 寄り合い 出欠連絡</title>
+  <!-- LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
+    }
+    h2 {
+      color: #107c41;
+      font-size: 1.25rem;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input[readonly] {
+      background-color: #f9f9f9;
+      color: #555;
+    }
+    button {
+      width: 100%;
+      background-color: #06c755;
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background-color: #a0a0a0;
+    }
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    .success-msg { color: #107c41; }
+    .error-msg { color: #d93025; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>町会 寄り合い 出欠連絡</h2>
+    
+    <div class="form-group">
+      <label for="userName">お名前</label>
+      <input type="text" id="userName" placeholder="LINE名を取得中..." readonly>
+    </div>
+
+    <div class="form-group">
+      <label for="attendance">出欠</label>
+      <select id="attendance">
+        <option value="出席">出席</option>
+        <option value="欠席">欠席</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="comment">備考（欠席理由・連絡事項など）</label>
+      <textarea id="comment" rows="3" placeholder="任意で入力してください"></textarea>
+    </div>
+
+    <button id="submitBtn" onclick="submitData()">送信する</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // 1. LIFF ID
+    const MY_LIFF_ID = "2012220242-palwFRVM";
+    
+    // 2. ステップ1で取得したGASのウェブアプリURL（末尾が /exec のもの）
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbywemwdBkXE3cepswqtfE2sPA9eBgyXK6UjgHJtBYzaatjpNbp_aMbZCjG4VXaML80b_Q/exec";
+
+    window.onload = function() {
+      liff.init({ liffId: MY_LIFF_ID })
+        .then(() => {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+            return;
+          }
+          return liff.getProfile();
+        })
+        .then(profile => {
+          if (profile) {
+            document.getElementById('userName').value = profile.displayName;
+          }
+        })
+        .catch(err => {
+          document.getElementById('status').innerText = 'LINE名の取得に失敗しました（手入力可）';
+          document.getElementById('userName').removeAttribute('readonly');
+        });
+    };
+
+    function submitData() {
+      const btn = document.getElementById('submitBtn');
+      const statusEl = document.getElementById('status');
+      const nameVal = document.getElementById('userName').value.trim();
+
+      if (!nameVal || nameVal === 'LINE名を取得中...') {
+        alert('お名前を入力してください。');
+        return;
+      }
+
+      btn.disabled = true;
+      statusEl.className = '';
+      statusEl.innerText = '送信中...';
+
+      const payload = {
+        name: nameVal,
+        attendance: document.getElementById('attendance').value,
+        comment: document.getElementById('comment').value.trim()
+      };
+
+      // GAS APIへ送信
+      fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        statusEl.className = 'success-msg';
+        statusEl.innerText = '✓ 送信が完了しました。画面を閉じます...';
+        setTimeout(() => {
+          liff.closeWindow();
+        }, 1500);
+      })
+      .catch(err => {
+        statusEl.className = 'error-msg';
+        statusEl.innerText = '送信に失敗しました。';
+        btn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>
