@@ -105,11 +105,8 @@
   </div>
 
   <script>
-    // 1. LIFF ID
     const MY_LIFF_ID = "2012220242-palwFRVM";
-    
-    // 2. ステップ1で取得したGASのウェブアプリURL（末尾が /exec のもの）
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbywemwdBkXE3cepswqtfE2sPA9eBgyXK6UjgHJtBYzaatjpNbp_aMbZCjG4VXaML80b_Q/exec";
+    const GAS_API_URL = "ここにGASのURLを貼り付け";
 
     window.onload = function() {
       liff.init({ liffId: MY_LIFF_ID })
@@ -126,7 +123,7 @@
           }
         })
         .catch(err => {
-          document.getElementById('status').innerText = 'LINE名の取得に失敗しました（手入力可）';
+          document.getElementById('status').innerText = 'エラー詳細: ' + (err.code || '') + ' ' + (err.message || JSON.stringify(err));
           document.getElementById('userName').removeAttribute('readonly');
         });
     };
@@ -151,7 +148,6 @@
         comment: document.getElementById('comment').value.trim()
       };
 
-      // GAS APIへ送信
       fetch(GAS_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
